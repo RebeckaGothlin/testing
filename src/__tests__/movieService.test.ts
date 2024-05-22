@@ -6,6 +6,8 @@ jest.mock('axios', () => ({
     return new Promise((resolve, reject) => {
       if (url.endsWith('error')) {
         reject('error');
+      } else if (url.endsWith('empty')) {
+        resolve({ data: { Search: [] } });
       } else {
         resolve({ data: { Search: testData } });
       }
@@ -13,20 +15,30 @@ jest.mock('axios', () => ({
   },
 }));
 
-test('should generate error message', async () => {
-  try {
-    await movieService.getData('error');
-  } catch (error: any) {
-    expect(error.length).toBe(0);
-    expect(testData.length).toBe(0);
-    expect(testData[0].Title).not.toBe('Inception');
-  }
-});
+describe('Movie Service', () => {
+  test('it should generate error message', async () => {
+    try {
+      await movieService.getData('error');
+    } catch (error: any) {
+      expect(error).toBe('error');
+    }
+  });
 
-test('should get test data', async () => {
-  await movieService.getData('text');
+  test('it should get test data', async () => {
+    const data = await movieService.getData('test');
+    expect(data.length).toBe(3);
+    expect(data[0].Title).toBe('Inception');
+    expect(data).not.toBe(null);
+  });
 
-  expect(testData.length).toBe(3);
-  expect(testData[0].Title).toBe('Inception');
-  expect(testData).not.toBe(null);
+  test('it should handle empty data response', async () => {
+    const data = await movieService.getData('empty');
+    expect(data.length).toBe(0);
+  });
+
+  test('it should not throw error for valid request', async () => {
+    const data = await movieService.getData('valid');
+    expect(data).toBeDefined();
+    expect(Array.isArray(data)).toBe(true);
+  });
 });
